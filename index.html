@@ -72,25 +72,37 @@
         const SHEET_NAME = 'Hoja1'; // Nombre de la pestaña
         const API_URL = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
 
-        async function buscarColaborador() {
-            const inputId = document.getElementById('idInput').value;
-            if (!inputId) return alert("Por favor ingrese un ID");
+async function buscarColaborador() {
+    const inputId = document.getElementById('idInput').value;
+    if (!inputId) return alert("Por favor ingrese un ID");
 
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                
-                const user = data.find(row => row.ID == inputId);
-
-                if (user) {
-                    mostrarCarnet(user);
-                } else {
-                    alert("Colaborador no encontrado");
-                }
-            } catch (error) {
-                console.error("Error al conectar con la base de datos:", error);
-            }
+    try {
+        const response = await fetch(API_URL);
+        
+        if (!response.ok) {
+            throw new Error("No se pudo conectar con Google Sheets. Revisa los permisos de compartir.");
         }
+
+        const data = await response.json();
+        
+        // Verificamos que 'data' sea realmente una lista (Array)
+        if (!Array.isArray(data)) {
+            console.error("Respuesta inesperada de la API:", data);
+            throw new Error("La base de datos no devolvió un formato válido.");
+        }
+
+        const user = data.find(row => row.ID == inputId);
+
+        if (user) {
+            mostrarCarnet(user);
+        } else {
+            alert("Colaborador no encontrado en la base de datos.");
+        }
+    } catch (error) {
+        console.error("Error detallado:", error);
+        alert("Error: " + error.message);
+    }
+}
 
         function formatDriveUrl(url) {
             // Convierte el link de compartir en un link directo de imagen
