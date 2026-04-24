@@ -7,47 +7,65 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Tipografía y estructura base */
         body { 
             font-family: 'Montserrat', sans-serif; 
-            background-color: #f1f5f9; 
+            background-color: #f8fafc; 
             position: relative;
             min-height: 100vh;
         }
 
+        /* Fondo corporativo: Sistemas contra incendios (Opacidad muy baja) */
         body::before {
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url('https://images.unsplash.com/photo-1584985226164-32bce22896f4?auto=format&fit=crop&w=1920&q=80');
+            /* Imagen de referencia de tuberías contra incendio */
+            background-image: url('https://images.unsplash.com/photo-1584985226164-32bce22896f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
             background-position: center;
-            opacity: 0.05;
+            opacity: 0.04; /* Casi transparente */
             z-index: -1;
+            pointer-events: none; /* Evita que el fondo interfiera con los clics */
         }
 
+        /* Estilos del Carnet */
         .id-card {
             background: white;
             border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border-top: 10px solid #1e40af; /* Azul SECURETEC */
+            position: relative;
             overflow: hidden;
-            transition: all 0.3s ease;
+        }
+
+        .photo-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
         }
 
         .photo-frame {
-            width: 140px;
-            height: 140px;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
             border-radius: 50%;
-            border: 4px solid #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 4px solid #f1f5f9;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
         }
 
+        /* Estados (Colores) */
+        .status-active { color: #047857; background: #d1fae5; }
+        .status-inactive { color: #b91c1c; background: #fee2e2; }
+
+        /* Loader */
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #1e40af;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e40af;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
             display: none;
         }
@@ -56,154 +74,141 @@
 </head>
 <body class="flex flex-col items-center justify-center p-4">
 
-    <div id="search-container" class="w-full max-w-md mb-6 bg-white/90 backdrop-blur p-6 rounded-2xl shadow-xl border border-white">
-        <h2 class="text-xl font-bold text-center text-gray-800 mb-4 uppercase tracking-tighter">Verificación SECURETEC</h2>
+    <div id="search-container" class="w-full max-w-md mb-8 bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Verificación de Identidad</h2>
         <div class="flex gap-2">
-            <input type="text" id="idInput" placeholder="Número de identificación" class="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold text-gray-700">
-            <button onclick="buscarColaborador()" class="bg-blue-800 text-white px-5 py-3 rounded-xl font-bold hover:bg-blue-900 transition flex items-center gap-2">
-                <span id="btn-text">Validar</span>
+            <input type="text" id="idInput" placeholder="Número de identificación" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-gray-50 text-gray-700 font-medium tracking-wide">
+            <button onclick="buscarColaborador()" class="bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-900 transition shadow-md flex items-center gap-2">
+                <span id="btn-text">Verificar</span>
                 <div id="loading-spinner" class="loader"></div>
             </button>
         </div>
     </div>
 
-    <div id="card-result" class="id-card w-full max-w-md hidden">
-        <div id="status-header" class="p-4 text-center text-white font-bold text-sm tracking-widest uppercase"></div>
-        
-        <div class="p-8">
-            <div class="flex flex-col items-center mb-6">
-                <img id="user_photo" src="" alt="Foto" class="photo-frame mb-4">
-                <h1 id="user_name" class="text-2xl font-black text-gray-900 leading-tight"></h1>
-                <p id="user_role" class="text-blue-700 font-bold text-xs uppercase tracking-widest mt-1"></p>
+    <div id="card-result" class="id-card w-full max-w-sm hidden">
+        <div class="p-8 flex flex-col items-center text-center">
+            
+            <div class="photo-container mb-6">
+                <img id="user_photo" src="" alt="Foto del colaborador" class="photo-frame">
+            </div>
+            
+            <h1 id="user_name" class="text-[22px] font-extrabold text-gray-900 leading-tight mb-1"></h1>
+            <p id="user_role" class="text-blue-600 font-bold text-sm uppercase tracking-wider mb-6"></p>
+
+            <div class="w-full grid grid-cols-2 gap-y-4 gap-x-2 text-left bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                <div>
+                    <span class="block text-[11px] text-gray-400 font-bold tracking-wider mb-1">DOCUMENTO</span>
+                    <span id="user_id" class="text-gray-800 font-bold text-sm"></span>
+                </div>
+                <div>
+                    <span class="block text-[11px] text-gray-400 font-bold tracking-wider mb-1">TIPO SANGRE</span>
+                    <span id="user_rh" class="text-gray-800 font-bold text-sm"></span>
+                </div>
+                <div class="col-span-2 flex flex-col items-center mt-2">
+                    <span class="block text-[11px] text-gray-400 font-bold tracking-wider mb-2">ESTADO</span>
+                    <span id="user_status" class="inline-block px-4 py-1.5 text-sm font-black rounded-full tracking-wide"></span>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div>
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">Documento</p>
-                    <p id="user_id" class="font-bold text-gray-800"></p>
-                </div>
-                <div>
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">RH</p>
-                    <p id="user_rh" class="font-bold text-gray-800"></p>
-                </div>
-                <div class="col-span-2">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">Fecha de Verificación</p>
-                    <p id="verification_time" class="font-bold text-gray-800 text-sm"></p>
-                </div>
-            </div>
-
-            <div id="legal-message" class="text-[11px] leading-relaxed text-center p-4 rounded-lg"></div>
+            <p class="mt-8 text-[11px] text-gray-500 italic leading-relaxed px-2">
+                Este carnet es personal e intransferible. Acredita al titular como empleado de <br><strong class="text-gray-700">SECURETEC SAS NIT 900789617-5</strong>.
+            </p>
         </div>
-
-        <div class="bg-gray-900 p-3 text-center">
-            <span class="text-white text-[9px] font-bold tracking-[0.3em]">SECURETEC SAS - SEGURIDAD Y CONTROL</span>
+        
+        <div class="bg-blue-800 p-4 text-center">
+            <span class="text-white text-[11px] font-bold tracking-[0.2em]">SISTEMA DE VERIFICACIÓN</span>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN (Reemplaza con tu ID de Google Sheets)
-        const SHEET_ID = '1Q3N814jMHK464840UrTOSq8_0SKujHu5N1pBxLb56sA'; 
-        const SHEET_NAME = 'Hoja1';
+        // CONFIGURACIÓN DE GOOGLE SHEETS
+        const SHEET_ID = 'TU_ID_DE_GOOGLE_SHEETS_AQUÍ'; // <-- RECUERDA PONER TU ID AQUÍ
+        const SHEET_NAME = 'Hoja1'; 
         const API_URL = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
 
         async function buscarColaborador() {
             const inputId = document.getElementById('idInput').value.trim();
-            if (!inputId) return;
+            if (!inputId) return alert("Por favor ingrese un número de identificación válido");
 
-            toggleLoading(true);
+            // UI de carga
+            document.getElementById('btn-text').style.display = 'none';
+            document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('card-result').classList.add('hidden');
 
             try {
                 const response = await fetch(API_URL);
+                
+                if (!response.ok) {
+                    throw new Error("No se pudo conectar con la base de datos.");
+                }
+
                 const data = await response.json();
                 
-                if (!Array.isArray(data)) throw new Error();
+                if (!Array.isArray(data)) {
+                    throw new Error("El formato de la base de datos no es válido.");
+                }
 
+                // BUSQUEDA EXACTA por la columna "Número de identificación"
                 const user = data.find(row => row['Número de identificación'] == inputId);
 
                 if (user) {
-                    mostrarResultado(user);
+                    mostrarCarnet(user);
                 } else {
-                    mostrarErrorNoEncontrado();
+                    alert("No se encontró ningún colaborador con ese número de identificación.");
                 }
             } catch (error) {
-                alert("Error de conexión con la base de datos.");
+                console.error("Error:", error);
+                alert("Error de conexión: Verifica que tu Google Sheet esté compartido como 'Cualquier persona con el enlace'.");
             } finally {
-                toggleLoading(false);
+                // Restaurar UI del botón
+                document.getElementById('btn-text').style.display = 'block';
+                document.getElementById('loading-spinner').style.display = 'none';
             }
         }
 
-        function toggleLoading(isLoading) {
-            document.getElementById('btn-text').style.display = isLoading ? 'none' : 'block';
-            document.getElementById('loading-spinner').style.display = isLoading ? 'block' : 'none';
-        }
-
         function formatDriveUrl(url) {
-            if (!url) return 'https://via.placeholder.com/150?text=SIN+FOTO';
-            const idMatch = url.match(/[-\w]{25,}/);
-            return idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[0]}` : url;
+            if (!url) return 'https://via.placeholder.com/150?text=Sin+Foto'; // Imagen por defecto si la celda está vacía
+            if (url.includes('drive.google.com')) {
+                const idMatch = url.match(/[-\w]{25,}/); // Extrae el ID del enlace de Drive con precisión
+                if (idMatch) {
+                    return `https://drive.google.com/uc?export=view&id=${idMatch[0]}`;
+                }
+            }
+            return url;
         }
 
-        function mostrarResultado(user) {
-    const card = document.getElementById('card-result');
-    const header = document.getElementById('status-header');
-    const messageBox = document.getElementById('legal-message');
-    const now = new Date();
-    const timeString = now.toLocaleDateString() + ' | ' + now.toLocaleTimeString();
-
-    card.classList.remove('hidden');
-    
-    // Usamos || '' para evitar el "undefined" si falta algún dato
-    document.getElementById('user_name').innerText = (user['Nombre completo'] || 'SIN NOMBRE').toUpperCase();
-    document.getElementById('user_role').innerText = (user['Cargo'] || 'SIN CARGO').toUpperCase();
-    document.getElementById('user_id').innerText = `${user['Tipo de identificación'] || ''} ${user['Número de identificación'] || ''}`;
-    document.getElementById('user_rh').innerText = user['RH'] || 'N/A';
-    document.getElementById('user_photo').src = formatDriveUrl(user['URL_Foto']);
-    document.getElementById('verification_time').innerText = timeString;
-
-    // LIMPIEZA DE ESTADO: Quitamos espacios y pasamos a Mayúsculas
-    const estadoRaw = String(user['Estado (Activo/Inactivo)'] || '').trim().toUpperCase();
-
-    if (estadoRaw === 'ACTIVO') {
-        header.innerText = "● COLABORADOR ACTIVO";
-        header.className = "p-4 text-center text-white font-bold text-sm bg-green-600";
-        messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-green-50 text-green-900 border border-green-100";
-        messageBox.innerHTML = `
-            Este carnet es personal e intransferible. Acredita al titular como empleado de <strong>SECURETEC SAS NIT 900789617-5</strong>. 
-            <br><br>Si tiene alguna duda comunicarse a los teléfonos: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
-        `;
-    } else {
-        header.innerText = "X COLABORADOR INACTIVO";
-        header.className = "p-4 text-center text-white font-bold text-sm bg-red-600";
-        messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-red-50 text-red-900 border border-red-100";
-        messageBox.innerHTML = `
-            <strong>ATENCIÓN:</strong> Este colaborador se encuentra actualmente <strong>INACTIVO</strong> o pendiente de actualización. 
-            <br><br>Si considera que esto es un error, comuníquese con la oficina de <strong>Talento Humano</strong>: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
-        `;
-    }
-}
-
-        function mostrarErrorNoEncontrado() {
-            const card = document.getElementById('card-result');
-            const header = document.getElementById('status-header');
-            const messageBox = document.getElementById('legal-message');
+        function mostrarCarnet(user) {
+            document.getElementById('card-result').classList.remove('hidden');
             
-            card.classList.remove('hidden');
-            header.innerText = "USUARIO NO ENCONTRADO";
-            header.className = "p-4 text-center text-white font-bold text-sm bg-gray-700";
-            document.getElementById('user_photo').src = "https://via.placeholder.com/150?text=X";
-            document.getElementById('user_name').innerText = "NO REGISTRADO";
-            document.getElementById('user_role').innerText = "SIN CARGO";
-            document.getElementById('user_id').innerText = "---";
-            document.getElementById('user_rh').innerText = "---";
-            document.getElementById('verification_time').innerText = "Acceso denegado";
+            // Extracción segura de datos utilizando los encabezados exactos de tu Excel
+            const nombreCompleto = user['Nombre completo'] || 'No registrado';
+            const cargo = user['Cargo'] || 'No registrado';
+            const tipoId = user['Tipo de identificación'] || '';
+            const numId = user['Número de identificación'] || '';
+            const rh = user['RH'] || 'N/A';
+            const urlFoto = user['URL_Foto'] || '';
+            const estadoBruto = user['Estado (Activo/Inactivo)'] || '';
+
+            // Asignación de datos al HTML
+            document.getElementById('user_name').innerText = nombreCompleto.toUpperCase();
+            document.getElementById('user_role').innerText = cargo.toUpperCase();
+            document.getElementById('user_id').innerText = `${tipoId} ${numId}`;
+            document.getElementById('user_rh').innerText = rh.toUpperCase();
+            document.getElementById('user_photo').src = formatDriveUrl(urlFoto);
             
-            messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-gray-100 text-gray-700 border border-gray-200";
-            messageBox.innerHTML = `
-                El número de identificación ingresado no aparece en nuestra base de datos oficial. 
-                <br><br>Si es un empleado activo, por favor comuníquese a la oficina de <strong>Talento Humano</strong>: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
-            `;
+            // Lógica de color para el estado
+            const statusBadge = document.getElementById('user_status');
+            const estadoLimpio = estadoBruto.trim().toUpperCase();
+            statusBadge.innerText = estadoLimpio || 'SIN ESTADO';
+            
+            if (estadoLimpio.includes('ACTIVO') && !estadoLimpio.includes('INACTIVO')) {
+                statusBadge.className = 'status-active shadow-sm';
+            } else {
+                statusBadge.className = 'status-inactive shadow-sm';
+            }
         }
 
+        // Auto-búsqueda si se escanea un QR con el ID en la URL (?id=123)
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const idParam = urlParams.get('id');
