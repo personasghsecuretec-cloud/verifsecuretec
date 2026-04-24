@@ -144,40 +144,43 @@
         }
 
         function mostrarResultado(user) {
-            const card = document.getElementById('card-result');
-            const header = document.getElementById('status-header');
-            const messageBox = document.getElementById('legal-message');
-            const now = new Date();
-            const timeString = now.toLocaleDateString() + ' | ' + now.toLocaleTimeString();
+    const card = document.getElementById('card-result');
+    const header = document.getElementById('status-header');
+    const messageBox = document.getElementById('legal-message');
+    const now = new Date();
+    const timeString = now.toLocaleDateString() + ' | ' + now.toLocaleTimeString();
 
-            card.classList.remove('hidden');
-            document.getElementById('user_name').innerText = user['Nombre completo'].toUpperCase();
-            document.getElementById('user_role').innerText = user['Cargo'].toUpperCase();
-            document.getElementById('user_id').innerText = `${user['Tipo de identificación']} ${user['Número de identificación']}`;
-            document.getElementById('user_rh').innerText = user['RH'];
-            document.getElementById('user_photo').src = formatDriveUrl(user['URL_Foto']);
-            document.getElementById('verification_time').innerText = timeString;
+    card.classList.remove('hidden');
+    
+    // Usamos || '' para evitar el "undefined" si falta algún dato
+    document.getElementById('user_name').innerText = (user['Nombre completo'] || 'SIN NOMBRE').toUpperCase();
+    document.getElementById('user_role').innerText = (user['Cargo'] || 'SIN CARGO').toUpperCase();
+    document.getElementById('user_id').innerText = `${user['Tipo de identificación'] || ''} ${user['Número de identificación'] || ''}`;
+    document.getElementById('user_rh').innerText = user['RH'] || 'N/A';
+    document.getElementById('user_photo').src = formatDriveUrl(user['URL_Foto']);
+    document.getElementById('verification_time').innerText = timeString;
 
-            const estado = (user['Estado (Activo/Inactivo)'] || '').toUpperCase();
+    // LIMPIEZA DE ESTADO: Quitamos espacios y pasamos a Mayúsculas
+    const estadoRaw = String(user['Estado (Activo/Inactivo)'] || '').trim().toUpperCase();
 
-            if (estado.includes('ACTIVO') && !estado.includes('INACTIVO')) {
-                header.innerText = "● COLABORADOR ACTIVO";
-                header.className = "p-4 text-center text-white font-bold text-sm bg-green-600";
-                messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-green-50 text-green-900 border border-green-100";
-                messageBox.innerHTML = `
-                    Este carnet es personal e intransferible. Acredita al titular como empleado de <strong>SECURETEC SAS NIT 900789617-5</strong>. 
-                    <br><br>Si tiene alguna duda comunicarse a los teléfonos: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
-                `;
-            } else {
-                header.innerText = "X COLABORADOR INACTIVO";
-                header.className = "p-4 text-center text-white font-bold text-sm bg-red-600";
-                messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-red-50 text-red-900 border border-red-100";
-                messageBox.innerHTML = `
-                    <strong>ATENCIÓN:</strong> Este colaborador se encuentra actualmente <strong>INACTIVO</strong>. 
-                    <br><br>Si considera que esto es un error, por favor comuníquese de inmediato a la oficina de <strong>Talento Humano</strong> a los teléfonos: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
-                `;
-            }
-        }
+    if (estadoRaw === 'ACTIVO') {
+        header.innerText = "● COLABORADOR ACTIVO";
+        header.className = "p-4 text-center text-white font-bold text-sm bg-green-600";
+        messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-green-50 text-green-900 border border-green-100";
+        messageBox.innerHTML = `
+            Este carnet es personal e intransferible. Acredita al titular como empleado de <strong>SECURETEC SAS NIT 900789617-5</strong>. 
+            <br><br>Si tiene alguna duda comunicarse a los teléfonos: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
+        `;
+    } else {
+        header.innerText = "X COLABORADOR INACTIVO";
+        header.className = "p-4 text-center text-white font-bold text-sm bg-red-600";
+        messageBox.className = "text-[11px] leading-relaxed text-center p-4 rounded-lg bg-red-50 text-red-900 border border-red-100";
+        messageBox.innerHTML = `
+            <strong>ATENCIÓN:</strong> Este colaborador se encuentra actualmente <strong>INACTIVO</strong> o pendiente de actualización. 
+            <br><br>Si considera que esto es un error, comuníquese con la oficina de <strong>Talento Humano</strong>: <br><strong>604 322 2886</strong> o <strong>321 875 2308</strong>.
+        `;
+    }
+}
 
         function mostrarErrorNoEncontrado() {
             const card = document.getElementById('card-result');
