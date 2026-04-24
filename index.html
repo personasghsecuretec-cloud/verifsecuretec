@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de Personal | SECURETEC SAS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #f3f4f6; }
+        .id-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 8px solid #1e40af; /* Azul Corporativo */
+        }
+        .photo-frame {
+            width: 150px;
+            height: 150px;
+            border: 4px solid #e5e7eb;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .status-active { color: #059669; background: #d1fae5; }
+        .status-inactive { color: #dc2626; background: #fee2e2; }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="search-container" class="w-full max-w-md mb-8">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Verificación de Identidad</h2>
+        <div class="flex gap-2">
+            <input type="text" id="idInput" placeholder="Ingrese Número de ID" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="buscarColaborador()" class="bg-blue-800 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-900 transition">Verificar</button>
+        </div>
+    </div>
+
+    <div id="card-result" class="id-card w-full max-w-sm overflow-hidden hidden">
+        <div class="p-6 flex flex-col items-center text-center">
+            <img id="user_photo" src="" alt="Foto" class="photo-frame mb-4 shadow-sm">
+            
+            <h1 id="user_name" class="text-xl font-bold text-gray-900 uppercase"></h1>
+            <p id="user_role" class="text-blue-700 font-semibold text-sm tracking-widest mb-4"></p>
+
+            <div class="w-full grid grid-cols-2 gap-4 text-left text-xs bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div>
+                    <span class="block text-gray-500 font-medium">DOCUMENTO</span>
+                    <span id="user_id" class="text-gray-800 font-bold text-sm"></span>
+                </div>
+                <div>
+                    <span class="block text-gray-500 font-medium">TIPO SANGRE</span>
+                    <span id="user_rh" class="text-gray-800 font-bold text-sm"></span>
+                </div>
+                <div class="col-span-2">
+                    <span class="block text-gray-500 font-medium text-center">ESTADO</span>
+                    <span id="user_status" class="block text-center font-bold px-2 py-1 rounded-full mt-1"></span>
+                </div>
+            </div>
+
+            <p class="mt-6 text-[10px] text-gray-400 italic leading-tight">
+                Este carnet es personal e intransferible. Acredita al titular como empleado de <strong>SECURETEC SAS NIT 900789617-5</strong>.
+            </p>
+        </div>
+        <div class="bg-blue-800 p-3 text-center">
+            <span class="text-white text-[10px] font-bold tracking-tighter">SISTEMA DE VERIFICACIÓN CORPORATIVA</span>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE GOOGLE SHEETS
+        const SHEET_ID = '1Q3N814jMHK464840UrTOSq8_0SKujHu5N1pBxLb56sA';
+        const SHEET_NAME = 'Hoja1'; // Nombre de la pestaña
+        const API_URL = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+        async function buscarColaborador() {
+            const inputId = document.getElementById('idInput').value;
+            if (!inputId) return alert("Por favor ingrese un ID");
+
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                const user = data.find(row => row.ID == inputId);
+
+                if (user) {
+                    mostrarCarnet(user);
+                } else {
+                    alert("Colaborador no encontrado");
+                }
+            } catch (error) {
+                console.error("Error al conectar con la base de datos:", error);
+            }
+        }
+
+        function formatDriveUrl(url) {
+            // Convierte el link de compartir en un link directo de imagen
+            if (url.includes('drive.google.com')) {
+                const id = url.split('/d/')[1].split('/')[0];
+                return `https://lh3.googleusercontent.com/u/0/d/${id}`;
+            }
+            return url;
+        }
+
+        function mostrarCarnet(user) {
+            document.getElementById('card-result').classList.remove('hidden');
+            document.getElementById('user_name').innerText = `${user.Nombre} ${user.Apellido}`;
+            document.getElementById('user_role').innerText = user.Cargo;
+            document.getElementById('user_id').innerText = `${user.Tipo_ID} ${user.ID}`;
+            document.getElementById('user_rh').innerText = user.RH;
+            document.getElementById('user_photo').src = formatDriveUrl(user.URL_Foto);
+            
+            const statusBadge = document.getElementById('user_status');
+            statusBadge.innerText = user.Estado.toUpperCase();
+            statusBadge.className = user.Estado.toLowerCase() === 'activo' ? 'status-active font-bold rounded-full' : 'status-inactive font-bold rounded-full';
+        }
+
+        // Lógica para QR (si la URL trae ?id=12345)
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idParam = urlParams.get('id');
+            if (idParam) {
+                document.getElementById('idInput').value = idParam;
+                buscarColaborador();
+            }
+        };
+    </script>
+</body>
+</html>
