@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Verificación de Personal | SECURETEC SAS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        body {
+            background-color: #f0f4f8;
+            position: relative;
+            min-height: 100vh;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('https://images.unsplash.com/photo-1584985226164-32bce22896f4?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.05;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .id-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transition: all 0.2s ease;
+            border-top: 6px solid #1e3a8a;
+        }
+        .photo-frame {
+            width: 130px;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background-color: #e2e8f0;
+        }
+        .loader-sm {
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #1e3a8a;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        input:focus {
+            outline: none;
+            ring: 2px solid #1e3a8a;
+        }
+        .transition-smooth {
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 md:p-6">
+
+    <!-- Contenedor principal de búsqueda -->
+    <div class="w-full max-w-md mb-6 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-5 border border-gray-100">
+        <div class="text-center mb-3">
+            <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">SECURETEC<span class="text-blue-800"> SAS</span></h2>
+            <p class="text-xs text-gray-500 font-medium">Verificación de identidad corporativa</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <input type="text" id="idInput" placeholder="Número de identificación" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition font-medium text-gray-700">
+            <button id="searchBtn" class="bg-blue-900 hover:bg-blue-950 text-white font-bold py-3 px-6 rounded-xl transition flex items-center justify-center gap-2 shadow-md">
+                <span id="btn-text">Validar</span>
+                <div id="loading-spinner" class="loader-sm hidden"></div>
+            </button>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-3 text-center">Ingrese el número de documento registrado</p>
+    </div>
+
+    <!-- CARD DE RESULTADO (inicialmente oculta) -->
+    <div id="card-result" class="id-card w-full max-w-md hidden transition-smooth">
+        <!-- Encabezado dinámico según estado -->
+        <div id="status-header" class="py-3 px-4 text-center text-white font-bold text-sm tracking-wider uppercase"></div>
+        
+        <div class="p-6">
+            <!-- Foto y datos principales -->
+            <div class="flex flex-col items-center mb-5">
+                <img id="user_photo" src="https://via.placeholder.com/130?text=SIN+FOTO" alt="Foto" class="photo-frame mb-4">
+                <h1 id="user_name" class="text-xl font-black text-gray-900 text-center leading-tight"></h1>
+                <p id="user_role" class="text-blue-700 font-bold text-xs uppercase tracking-wider mt-1 bg-blue-50 px-3 py-1 rounded-full"></p>
+            </div>
+
+            <!-- Datos estructurados tipo carnet -->
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Documento</p>
+                        <p id="user_doc_full" class="text-sm font-bold text-gray-800 break-words"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">RH / Tipo sangre</p>
+                        <p id="user_rh" class="text-sm font-bold text-gray-800"></p>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estado actual</p>
+                        <span id="user_status_badge" class="text-xs font-bold px-3 py-1 rounded-full"></span>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Verificación</p>
+                        <p id="verification_time" class="text-xs font-semibold text-gray-700"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensaje legal dinámico (activo/inactivo) -->
+            <div id="legal-message" class="text-xs leading-relaxed text-center p-3 rounded-xl"></div>
+        </div>
+
+        <!-- Footer corporativo -->
+        <div class="bg-gray-900 py-3 px-4 text-center">
+            <p class="text-white text-[9px] font-bold tracking-[0.2em]">SECURETEC SAS - SEGURIDAD Y CONTROL</p>
+            <p class="text-gray-400 text-[8px] mt-1">NIT 900789617-5 | Sistema oficial de verificación</p>
+        </div>
+    </div>
+
+    <script>
+        // --------------------------------------------------------------
+        // CONFIGURACIÓN CORRECTA (usando el ID del cliente proporcionado)
+        // --------------------------------------------------------------
+        const SHEET_ID = '1Q3N814jMHK464840UrTOSq8_0SKujHu5N1pBxLb56sA';
+        const SHEET_NAME = 'Hoja1';
+        const API_URL = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+        // Elementos del DOM
+        const searchBtn = document.getElementById('searchBtn');
+        const idInput = document.getElementById('idInput');
+        const cardContainer = document.getElementById('card-result');
+        const statusHeader = document.getElementById('status-header');
+        const userPhoto = document.getElementById('user_photo');
+        const userName = document.getElementById('user_name');
+        const userRole = document.getElementById('user_role');
+        const userDocFull = document.getElementById('user_doc_full');
+        const userRh = document.getElementById('user_rh');
+        const userStatusBadge = document.getElementById('user_status_badge');
+        const verificationTimeSpan = document.getElementById('verification_time');
+        const legalMessageDiv = document.getElementById('legal-message');
+        const btnTextSpan = document.getElementById('btn-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        // Helper: convertir URL de Google Drive a imagen directa
+        function formatDriveUrl(url) {
+            if (!url || url === '') return 'https://via.placeholder.com/130?text=SIN+FOTO';
+            // Si es enlace de drive.google.com
+            if (url.includes('drive.google.com')) {
+                // Extraer ID del archivo
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) {
+                    return `https://lh3.googleusercontent.com/d/${match[1]}=w150-h150?authuser=0`;
+                }
+                // fallback con regex general
+                const idMatch = url.match(/[-\w]{25,}/);
+                if (idMatch) return `https://drive.google.com/uc?export=view&id=${idMatch[0]}`;
+            }
+            // Si es otra URL directa de imagen
+            if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) return url;
+            return 'https://via.placeholder.com/130?text=FOTO+NO+DISPONIBLE';
+        }
+
+        // Helper: mostrar/ocultar loading
+        function setLoading(isLoading) {
+            if (isLoading) {
+                btnTextSpan.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+                searchBtn.disabled = true;
+                searchBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            } else {
+                btnTextSpan.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                searchBtn.disabled = false;
+                searchBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        // Mostrar tarjeta de error (colaborador no encontrado)
+        function mostrarErrorNoEncontrado() {
+            cardContainer.classList.remove('hidden');
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('es-CO')} - ${now.toLocaleTimeString('es-CO')}`;
+            
+            // Estilo header gris oscuro
+            statusHeader.innerText = "✖ USUARIO NO REGISTRADO";
+            statusHeader.className = "py-3 px-4 text-center text-white font-bold text-sm tracking-wider uppercase bg-gray-700";
+            
+            // Imagen y textos por defecto
+            userPhoto.src = "https://via.placeholder.com/130?text=SIN+REGISTRO";
+            userName.innerText = "NO AUTORIZADO";
+            userRole.innerText = "ACCESO DENEGADO";
+            userDocFull.innerText = "---";
+            userRh.innerText = "---";
+            userStatusBadge.innerText = "SIN VÍNCULO";
+            userStatusBadge.className = "text-xs font-bold px-3 py-1 rounded-full bg-gray-200 text-gray-700";
+            verificationTimeSpan.innerText = timeString;
+            
+            // Mensaje legal de advertencia
+            legalMessageDiv.innerHTML = `
+                <div class="font-bold text-red-700">⚠️ IDENTIFICACIÓN NO ENCONTRADA ⚠️</div>
+                <p class="text-gray-700 mt-1">El número ingresado no figura en nuestra base de datos oficial.</p>
+                <p class="text-gray-600 text-[11px] mt-2">Si considera que es un error, comuníquese inmediatamente a Talento Humano:</p>
+                <p class="font-bold text-blue-800 mt-1">📞 604 322 2886 / 321 875 2308</p>
+            `;
+            legalMessageDiv.className = "text-xs leading-relaxed text-center p-3 rounded-xl bg-red-50 text-red-800 border border-red-200";
+        }
+
+        // Mostrar carnet correctamente con los datos encontrados
+        function mostrarCarnet(empleado) {
+            cardContainer.classList.remove('hidden');
+            const now = new Date();
+            const timeString = `${now.toLocaleDateString('es-CO')} - ${now.toLocaleTimeString('es-CO')}`;
+            verificationTimeSpan.innerText = timeString;
+            
+            // Datos principales del empleado según columnas esperadas
+            const nombreCompleto = (empleado['Nombre completo'] || '').toUpperCase() || "SIN NOMBRE";
+            const cargo = (empleado['Cargo'] || '').toUpperCase() || "SIN CARGO";
+            const tipoDoc = empleado['Tipo de identificación'] || '';
+            const numDoc = empleado['Número de identificación'] || '';
+            const documentoFormateado = tipoDoc && numDoc ? `${tipoDoc} ${numDoc}` : (numDoc || '---');
+            const rh = empleado['RH'] || 'No registra';
+            const estadoRaw = (empleado['Estado (Activo/Inactivo)'] || '').trim().toLowerCase();
+            const esActivo = estadoRaw === 'activo';
+            
+            // Foto: posible columna URL_Foto
+            let fotoUrl = empleado['URL_Foto'] || empleado['URL_FOTO'] || '';
+            userPhoto.src = formatDriveUrl(fotoUrl);
+            userName.innerText = nombreCompleto;
+            userRole.innerText = cargo;
+            userDocFull.innerText = documentoFormateado;
+            userRh.innerText = rh.toUpperCase();
+            
+            // Configurar aspecto visual según estado activo/inactivo
+            if (esActivo) {
+                statusHeader.innerText = "● COLABORADOR ACTIVO";
+                statusHeader.className = "py-3 px-4 text-center text-white font-bold text-sm tracking-wider uppercase bg-emerald-600";
+                userStatusBadge.innerText = "ACTIVO";
+                userStatusBadge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200";
+                legalMessageDiv.innerHTML = `
+                    <div class="font-bold text-green-700">✅ VERIFICACIÓN EXITOSA</div>
+                    <p class="text-gray-700 mt-1">Este carnet es personal e intransferible. Acredita al titular como empleado activo de <strong>SECURETEC SAS</strong>.</p>
+                    <p class="text-gray-600 text-[11px] mt-2">Oficina de control: 📞 604 322 2886 | 📱 321 875 2308</p>
+                `;
+                legalMessageDiv.className = "text-xs leading-relaxed text-center p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200";
+            } else {
+                // Inactivo o cualquier otro estado que no sea 'activo'
+                statusHeader.innerText = "✖ COLABORADOR INACTIVO";
+                statusHeader.className = "py-3 px-4 text-center text-white font-bold text-sm tracking-wider uppercase bg-red-700";
+                userStatusBadge.innerText = "INACTIVO";
+                userStatusBadge.className = "text-xs font-bold px-3 py-1 rounded-full bg-red-100 text-red-800 border border-red-200";
+                legalMessageDiv.innerHTML = `
+                    <div class="font-bold text-red-700">⚠️ ESTADO INACTIVO ⚠️</div>
+                    <p class="text-gray-700 mt-1">Este colaborador se encuentra actualmente <strong>INACTIVO</strong> en el sistema corporativo.</p>
+                    <p class="text-gray-600 text-[11px] mt-2">Si cree que es un error, contacte urgentemente a Talento Humano:</p>
+                    <p class="font-bold text-blue-800">📞 604 322 2886 / 321 875 2308</p>
+                `;
+                legalMessageDiv.className = "text-xs leading-relaxed text-center p-3 rounded-xl bg-red-50 text-red-800 border border-red-200";
+            }
+        }
+
+        // Función principal de búsqueda
+        async function buscarColaborador() {
+            const identificacion = idInput.value.trim();
+            if (identificacion === "") {
+                alert("Por favor, ingrese un número de identificación válido.");
+                return;
+            }
+
+            setLoading(true);
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`Error HTTP ${response.status}: No se pudo conectar con la base de datos`);
+                }
+                const data = await response.json();
+                
+                // Verificar que data sea un array válido
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error("No se encontraron registros en la hoja de cálculo. Revise la configuración.");
+                }
+                
+                // Buscar coincidencia exacta por "Número de identificación" (case insensitive trim)
+                const empleadoEncontrado = data.find(row => {
+                    const docNumber = row['Número de identificación'];
+                    if (!docNumber) return false;
+                    return String(docNumber).trim() === identificacion;
+                });
+                
+                if (empleadoEncontrado) {
+                    mostrarCarnet(empleadoEncontrado);
+                } else {
+                    mostrarErrorNoEncontrado();
+                }
+            } catch (error) {
+                console.error("Error en la verificación:", error);
+                alert("⚠️ Error de conexión o formato de datos. Verifique su conexión o contacte al administrador.\n\nDetalle: " + error.message);
+                // Opcional: ocultar card o mostrar mensaje de error amplio
+                cardContainer.classList.add('hidden');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Lógica para QR / URL con parámetro ?id=XXXXX
+        function autoCargarDesdeURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idParam = urlParams.get('id');
+            if (idParam && idParam.trim() !== "") {
+                idInput.value = idParam.trim();
+                // Pequeño retardo para asegurar que el DOM esté listo
+                setTimeout(() => {
+                    buscarColaborador();
+                }, 100);
+            }
+        }
+
+        // Eventos: click en botón y tecla Enter en input
+        searchBtn.addEventListener('click', buscarColaborador);
+        idInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarColaborador();
+            }
+        });
+
+        // Inicializar: ocultar card y ejecutar autollenado por URL
+        window.addEventListener('DOMContentLoaded', () => {
+            cardContainer.classList.add('hidden');
+            autoCargarDesdeURL();
+        });
+    </script>
+</body>
+</html>
